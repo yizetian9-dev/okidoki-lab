@@ -13,7 +13,7 @@ function parseOCR(raw){
  const lines=String(raw||'').split(/\r?\n/), out=[];
  // OCR候補: 「297 88 RB」または「297G RB 88枚」。曖昧な行は自動登録しない。
  for(let line of lines){
-  let t=line.toUpperCase().replace(/[，、]/g,',').replace(/ＢＢ/g,'BB').replace(/ＲＢ/g,'RB').replace(/BIG/g,'BB').replace(/REG/g,'RB');
+  let t=line.replace(/\b\d{1,2}:\d{2}\b/g,'').toUpperCase().replace(/[，、]/g,',').replace(/ＢＢ/g,'BB').replace(/ＲＢ/g,'RB').replace(/BIG/g,'BB').replace(/REG/g,'RB');
   let kind=t.match(/(?:^|[^A-Z])(BB|RB)(?:$|[^A-Z])/);if(!kind)continue;
   let nums=[...t.matchAll(/(\d{1,5})\s*(?:G|ゲーム|枚)?/g)].map(m=>Number(m[1]));
   if(nums.length<2)continue;
@@ -21,7 +21,7 @@ function parseOCR(raw){
   let g=gm?Number(gm[1]):nums[0], payout=pm?Number(pm[1]):nums.find((n,i)=>i>0&&n!==g);
   if(Number.isFinite(g)&&Number.isFinite(payout)&&g>=0&&g<=9999&&payout>=0&&payout<=99999)out.push({g,payout,type:kind[1]});
  }
- return out;
+ return out.reverse();
 }
 function formatRows(rows){return rows.map(r=>`${r.g},${r.payout},${r.type}`).join('\n')}
 function parseManualRows(value){let out=[];for(let line of value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean)){let m=line.match(/^(\d+)\s*[,，\t ]+\s*(\d+)\s*[,，\t ]+\s*(BB|RB)$/i);if(!m)throw Error('形式が違います：'+line);out.push({g:Number(m[1]),payout:Number(m[2]),type:m[3].toUpperCase()})}return out}
